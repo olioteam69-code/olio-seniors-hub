@@ -1,6 +1,6 @@
 // Runs every 15 minutes from pg_cron. Sends one letter a day, at each senior's chosen time (Dhaka time),
 // for the next evening they haven't finished. Pauses after 3 quiet days, then one gentle letter a week, for up to 28 days.
-// Needs header x-hub-cron = HUB_CRON_SECRET. Without RESEND_API_KEY it runs in test mode: it logs, sends nothing.
+// Needs header x-hub-cron = HUB_CRON_SECRET env, or the vault secret hub_cron_secret (checked via hub_cron_ok). Without RESEND_API_KEY it runs in test mode: it logs, sends nothing.
 const SLOT: Record<string, number> = { "Morning": 8, "After lunch": 14, "Evening": 20, "Late night": 23 };
 const Q: Record<number, [string, string]> = {
   1: ["Who you were before", "Go back to the time before it all began. Where were you, and what did you want?"],
@@ -14,14 +14,17 @@ const Q: Record<number, [string, string]> = {
 const DAY = 864e5;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  const secret = Deno.env.get("HUB_CRON_SECRET");
-  if (!secret || req.headers.get("x-hub-cron") !== secret) return json({ error: "forbidden" }, 403);
+  const sb = admin();
+  const given = req.headers.get("x-hub-cron") || "";
+  const envSecret = Deno.env.get("HUB_CRON_SECRET");
+  const ok = (envSecret && given === envSecret) || (given && (await sb.rpc("hub_cron_ok", { p: given })).data === true);
+  if (!ok) return json({ error: "forbidden" }, 403);
   const body = await req.json().catch(() => ({}));
   const force = !!body?.force; // for a manual test run: ignore the time slot
-  const sb = admin();
+  const only: string | undefined = typeof body?.journey === "string" ? body.journey : undefined; // test run for one journey
   const now = new Date(), dhaka = new Date(now.getTime() + 6 * 3600e3), hour = dhaka.getUTCHours(), today = dhaka.toISOString().slice(0, 10);
   const { data: js } = await sb.from("journeys").select("id, user_id, first_name, reminder_slot, status, started_at, last_active_at")
-    .in("status", ["active", "paused"]).is("reminders_stopped_at", null);
+    .in("status", ["active", "paused"]).is("reminders_stopped_at", null).match(only ? { id: only } : {});
   const out: unknown[] = [];
   for (const j of js || []) {
     if (!force && SLOT[j.reminder_slot] !== hour) continue;

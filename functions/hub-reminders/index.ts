@@ -1,12 +1,13 @@
+// Shared helpers for the Senior's Hub edge functions (inlined into each function on deploy).
 import { createClient } from "npm:@supabase/supabase-js@2.48.1";
-const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hub-cron", "Access-Control-Allow-Methods": "POST, OPTIONS" };
-const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
-const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false, autoRefreshToken: false } });
-const HUB_URL = () => (Deno.env.get("HUB_URL") || "https://olio-seniors.netlify.app").replace(/\/$/, "");
-async function sha256(s: string) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, "0")).join(""); }
-function randomToken() { const b = crypto.getRandomValues(new Uint8Array(32)); return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
-const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
-async function sendMail(to: string, subject: string, html: string): Promise<{ id?: string; skipped?: string; error?: string }> {
+export const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hub-cron", "Access-Control-Allow-Methods": "POST, OPTIONS" };
+export const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
+export const admin = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false, autoRefreshToken: false } });
+export const HUB_URL = () => (Deno.env.get("HUB_URL") || "https://olio-seniors.netlify.app").replace(/\/$/, "");
+export async function sha256(s: string) { const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, "0")).join(""); }
+export function randomToken() { const b = crypto.getRandomValues(new Uint8Array(32)); return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+export async function sendMail(to: string, subject: string, html: string): Promise<{ id?: string; skipped?: string; error?: string }> {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key) return { skipped: "test mode: no RESEND_API_KEY set" };
   const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -14,7 +15,7 @@ async function sendMail(to: string, subject: string, html: string): Promise<{ id
   const j = await r.json().catch(() => ({}));
   return r.ok ? { id: j.id } : { error: String(j.message || r.status) };
 }
-function letter(first: string, paras: string[], cta: { href: string; label: string }, foot: string) {
+export function letter(first: string, paras: string[], cta: { href: string; label: string }, foot: string) {
   return `<div style="background:#EFECE6;padding:24px 12px;font-family:Inter,Arial,sans-serif;color:#2A2E28">
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:22px;padding:28px 24px">
   <p style="font:800 24px Poppins,Arial,sans-serif;color:#2F5240;margin:0 0 18px">olio</p>
@@ -23,10 +24,9 @@ function letter(first: string, paras: string[], cta: { href: string; label: stri
   <p style="margin:22px 0"><a href="${cta.href}" style="display:inline-block;background:#B4623F;color:#fff;text-decoration:none;font-weight:600;padding:14px 26px;border-radius:999px">${esc(cta.label)}</a></p>
   <p style="font-size:13px;line-height:1.5;color:#62675F;margin:18px 0 0">${foot}</p></div></div>`;
 }
-
 // Runs every 15 minutes from pg_cron. Sends one letter a day, at each senior's chosen time (Dhaka time),
 // for the next evening they haven't finished. Pauses after 3 quiet days, then one gentle letter a week, for up to 28 days.
-// Needs header x-hub-cron = HUB_CRON_SECRET. Without RESEND_API_KEY it runs in test mode: it logs, sends nothing.
+// Needs header x-hub-cron = HUB_CRON_SECRET env, or the vault secret hub_cron_secret (checked via hub_cron_ok). Without RESEND_API_KEY it runs in test mode: it logs, sends nothing.
 const SLOT: Record<string, number> = { "Morning": 8, "After lunch": 14, "Evening": 20, "Late night": 23 };
 const Q: Record<number, [string, string]> = {
   1: ["Who you were before", "Go back to the time before it all began. Where were you, and what did you want?"],
@@ -40,14 +40,17 @@ const Q: Record<number, [string, string]> = {
 const DAY = 864e5;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  const secret = Deno.env.get("HUB_CRON_SECRET");
-  if (!secret || req.headers.get("x-hub-cron") !== secret) return json({ error: "forbidden" }, 403);
+  const sb = admin();
+  const given = req.headers.get("x-hub-cron") || "";
+  const envSecret = Deno.env.get("HUB_CRON_SECRET");
+  const ok = (envSecret && given === envSecret) || (given && (await sb.rpc("hub_cron_ok", { p: given })).data === true);
+  if (!ok) return json({ error: "forbidden" }, 403);
   const body = await req.json().catch(() => ({}));
   const force = !!body?.force; // for a manual test run: ignore the time slot
-  const sb = admin();
+  const only: string | undefined = typeof body?.journey === "string" ? body.journey : undefined; // test run for one journey
   const now = new Date(), dhaka = new Date(now.getTime() + 6 * 3600e3), hour = dhaka.getUTCHours(), today = dhaka.toISOString().slice(0, 10);
   const { data: js } = await sb.from("journeys").select("id, user_id, first_name, reminder_slot, status, started_at, last_active_at")
-    .in("status", ["active", "paused"]).is("reminders_stopped_at", null);
+    .in("status", ["active", "paused"]).is("reminders_stopped_at", null).match(only ? { id: only } : {});
   const out: unknown[] = [];
   for (const j of js || []) {
     if (!force && SLOT[j.reminder_slot] !== hour) continue;

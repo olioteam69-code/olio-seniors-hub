@@ -3,3 +3,7 @@
 update storage.buckets set allowed_mime_types = (select array_agg(distinct t) from unnest(allowed_mime_types || array['image/png','image/webp','image/heic','image/heif','application/pdf']) t) where id = 'senior-media';
 -- 2) admin_hub_draft_road: senior_roads.display_name is a generated column; stop inserting it.
 --    (Full function body as applied lives in migration seniors_hub_draft_road_fix.)
+
+-- 3) Reminder scheduler: shared secret lives in Supabase Vault (no one has to copy it),
+--    checked by public.hub_cron_ok() (service_role only). pg_cron calls hub-reminders every 15 minutes.
+--    See migrations seniors_hub_cron_secret_vault and seniors_hub_reminders_cron.
