@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Olio Senior's Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.48.1/dist/umd/supabase.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a quiet evening conversation with someone who wants to hear your story; never a form.
+   IDEA: the Olio app's own "today's one step" rhythm, turned around: tonight's one question.
+   PICTURE: Olio's wizard on the road, standing at tonight's stop, inside the sage hero card.
+   COLOUR and TYPE: live app v37 tokens (Option G): stone, forest green, clay buttons, sage, butter and mist panels; Poppins + Inter.
+   LAYOUT: the app's phone column, centred on wide screens; one question per screen; pill buttons. */
+:root{--bg:#EFECE6;--card:#FFFFFF;--paper:#F7F5F0;--ink:#2A2E28;--forest:#2F5240;--clay:#B4623F;--claydk:#9A5233;--clayt:#F2DDD0;
+--sage:#E2E8DD;--saget:#DCE6D5;--butter:#F1E4B8;--mist:#DCE5E2;--line:#D8DCD1;--muted:#62675F;--faint:#C9CCC3;--onclay:#fff;
+--shadow:0 6px 18px rgba(42,46,40,.07),0 1px 2px rgba(42,46,40,.04);--head:"Poppins",system-ui,sans-serif;--sans:"Inter",system-ui,sans-serif;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131815;--card:#1B221D;--paper:#1B221D;--ink:#E8ECE4;--forest:#8FB89C;--clay:#D58A68;--claydk:#C47A58;--clayt:#3A2A22;--sage:#232C26;--saget:#24302A;--butter:#3A3424;--mist:#22302E;--line:#2D3731;--muted:#9CA698;--faint:#3A443D;--onclay:#1B120D;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#131815;--card:#1B221D;--paper:#1B221D;--ink:#E8ECE4;--forest:#8FB89C;--clay:#D58A68;--claydk:#C47A58;--clayt:#3A2A22;--sage:#232C26;--saget:#24302A;--butter:#3A3424;--mist:#22302E;--line:#2D3731;--muted:#9CA698;--faint:#3A443D;--onclay:#1B120D;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--sans);min-height:100dvh;display:flex;flex-direction:column;overflow-x:clip}
+a{color:var(--forest)}
+h1,h2,h3{font-family:var(--head);font-weight:700;color:var(--ink);line-height:1.2;margin:0 0 10px;text-wrap:balance}
+h1{font-size:clamp(28px,7vw,34px)}h2{font-size:clamp(23px,5.5vw,27px)}h3{font-size:19px}
+p{margin:0 0 14px}
+.muted{color:var(--muted)}
+.top{display:flex;align-items:center;gap:12px;max-width:560px;width:100%;margin:0 auto;padding:22px 20px 8px;flex-wrap:wrap}
+.wordmark{font:800 26px/1 var(--head);color:var(--forest);text-decoration:none;letter-spacing:-.01em}
+.top nav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;background:#E3E1D9;border-radius:19px;padding:4px}
+:root[data-theme=dark] .top nav{background:var(--card)}
+.top nav a{text-decoration:none;font:600 13px var(--sans);color:var(--muted);min-height:34px;padding:0 12px;border-radius:15px;display:inline-flex;align-items:center}
+.top nav a[aria-current=page]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(42,46,40,.08)}
+main{flex:1;width:100%;max-width:560px;margin:0 auto;padding:12px 20px 36px;display:flex;flex-direction:column}
+.eyebrow{font:600 11px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--forest);margin-bottom:8px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;padding:12px 22px;border:0;border-radius:999px;background:var(--clay);color:var(--onclay);font:600 16px var(--sans);cursor:pointer;text-decoration:none}
+.btn:active{background:var(--claydk)}
+.btn.quiet{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.btn.link{background:none;color:var(--forest);min-height:44px;width:auto;padding:0 6px;font-weight:600;box-shadow:none}
+.btn:focus-visible,a:focus-visible,.chip:focus-visible,label.opt:focus-within{outline:2px solid var(--forest);outline-offset:3px}
+.stack{display:grid;gap:10px}.bottom{margin-top:auto;padding-top:24px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+textarea,input[type=text],input[type=email]{width:100%;font:16px/1.6 var(--sans);color:var(--ink);background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;min-height:54px}
+textarea{min-height:30dvh;resize:vertical;border-color:var(--forest)}
+textarea:focus,input:focus{outline:2px solid var(--forest);outline-offset:1px}
+.hint{font-size:14px;color:var(--muted);margin-top:8px}
+.taskcard{background:var(--mist);border-radius:22px;padding:20px 20px 18px;margin-bottom:16px}
+.q{font:700 clamp(21px,5.2vw,24px)/1.3 var(--head);color:var(--ink);margin:0 0 4px;text-wrap:pretty}
+.opener{font:500 15px/1.6 var(--sans);color:var(--forest);margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:7px 14px;font:500 14px var(--sans);cursor:pointer;min-height:40px}
+.chip:hover{border-color:var(--forest)}
+.opts{display:grid;gap:10px}
+label.opt{display:flex;align-items:center;gap:12px;padding:14px 18px;border:1.5px solid var(--line);border-radius:18px;background:var(--card);cursor:pointer;font:500 16px var(--sans);min-height:56px}
+label.opt input{accent-color:var(--forest);width:20px;height:20px}
+label.opt:has(input:checked){border-color:var(--forest);background:var(--sage)}
+.dots{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin:4px 0 18px}.dots i{height:5px;border-radius:4px;background:var(--faint)}.dots i.on{background:var(--forest)}.dots i.cur{background:var(--clay)}
+.hero{position:relative;background:var(--saget);border-radius:24px;padding:20px 18px 16px;box-shadow:0 8px 20px rgba(42,46,40,.08);display:grid;grid-template-columns:minmax(0,1fr) 104px;column-gap:8px;margin-bottom:16px}
+.hero .txt{min-width:0}.hero h2{font-size:clamp(22px,5.4vw,25px);margin:4px 0 6px}
+.hero .sub{color:var(--muted);font-size:14px;margin-bottom:6px}
+.hero .hq{font:600 13.5px/1.45 var(--sans);color:var(--forest);margin:4px 0 0}
+.hero .fig{align-self:end;justify-self:center}.hero .fig img{width:96px;display:block}
+.hero .btn{grid-column:1/-1;margin-top:14px}
+.scene{position:relative;width:100%;max-width:420px;aspect-ratio:440/170;margin:10px auto 22px}
+.scene svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.scene img{position:absolute;height:64%;transform:translate(-50%,-90%);transition:left .9s ease,top .9s ease}
+.center{text-align:center}
+.tagline{font:500 17px/1.55 var(--sans);color:var(--muted)}
+.card{background:var(--card);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:4px 0 18px}
+.tile{border-radius:22px;padding:16px;text-decoration:none;color:var(--ink);min-height:120px;display:flex;flex-direction:column}
+.tile b{font:700 17px/1.25 var(--head);margin:8px 0 4px}.tile span{font-size:13px;color:var(--muted)}
+.tile .tag{align-self:flex-start;background:var(--card);border-radius:99px;padding:3px 10px;font:600 12px var(--sans);color:var(--ink)}
+.tile.butter{background:var(--butter)}.tile.mist{background:var(--mist)}.tile.peach{background:var(--clayt)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:0 0 22px}
+.week a{display:grid;justify-items:center;gap:2px;text-decoration:none;color:var(--muted);font:500 12px var(--sans);padding:10px 0 9px;border-radius:999px;border:1.5px solid var(--line);background:var(--card)}
+.week b{font:700 17px var(--head);color:var(--ink)}
+.week .done{background:var(--sage);border-color:var(--sage)}.week .done b{color:var(--forest)}
+.week .now{background:var(--forest);border-color:var(--forest);color:#DCE6D5}.week .now b{color:#fff}
+.quote{font:500 19px/1.5 var(--sans);color:var(--ink);background:var(--card);border-radius:18px;padding:16px 18px;margin:10px 0 18px;box-shadow:var(--shadow)}
+.quote::before{content:"“";font:800 30px/0 var(--head);color:var(--clay);vertical-align:-10px;margin-right:4px}
+.book h3{margin-top:26px;color:var(--forest)}.book .a{font-size:17px;white-space:pre-wrap;margin:0 0 10px}
+.book .qq{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.cp{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.num{flex:none;width:32px;height:32px;border-radius:50%;background:var(--forest);color:#fff;display:grid;place-items:center;font:700 14px var(--head)}
+.stepline{display:grid;grid-template-columns:minmax(0,1fr) 110px 44px;gap:8px;margin-bottom:8px}
+.stepline button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;color:var(--muted);font-size:22px;cursor:pointer}
+@media(max-width:520px){.stepline{grid-template-columns:minmax(0,1fr) 44px}.stepline .sm{grid-column:1}}
+label.check{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:18px;margin-bottom:10px;cursor:pointer;background:var(--card);box-shadow:var(--shadow)}
+label.check input{width:22px;height:22px;accent-color:var(--forest);flex:none;margin-top:2px}
+.drop{border:1.5px dashed var(--faint);border-radius:18px;padding:14px;margin-top:12px;font-size:14px;color:var(--muted);background:var(--card)}
+.letter{background:var(--card);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.letter .meta{font-size:14px;color:var(--muted);padding:14px 20px;border-bottom:1px solid var(--line)}
+.letter .body{padding:22px 20px}.letter .body p{font-size:16px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl td,.tbl th{border-bottom:1px solid var(--line);padding:10px 6px;text-align:left;vertical-align:top}.tbl code{color:var(--forest);font-size:13px;overflow-wrap:anywhere}
+.proto{max-width:560px;width:100%;margin:0 auto;padding:14px 20px 24px;font-size:13px;color:var(--muted);display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line)}
+.proto select,.proto button{font:13px var(--sans);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;min-height:34px;cursor:pointer}
+.fade>*{animation:rise .28s cubic-bezier(.22,.8,.24,1) both}.fade>*:nth-child(2){animation-delay:50ms}.fade>*:nth-child(3){animation-delay:100ms}.fade>*:nth-child(4){animation-delay:150ms}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.fade>*{animation:none}.scene img{transition:none}}
+.bubble{position:relative;background:var(--card);border-radius:20px;padding:14px 16px;box-shadow:var(--shadow);font:500 16px/1.5 var(--sans);color:var(--ink)}
+.guide{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:end;margin:6px 0 18px}
+.guide img{width:96px;display:block}
+.guide .bubble::after{content:"";position:absolute;left:-8px;bottom:18px;border:8px solid transparent;border-right-color:var(--card);border-left:0}
+.guide .who{font:600 11px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--forest);display:block;margin-bottom:4px}
+.wiz{background:var(--forest);color:#EEF4EF;border-radius:24px;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:6px 12px;margin:6px 0 16px}
+.wiz .who{grid-column:1/-1;font:600 11px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#B9D3C1}
+.wiz .said{font:500 17px/1.55 var(--sans);margin:0}
+.wiz img{width:84px;align-self:end;background:#EEF4EF;border-radius:18px;padding:4px}
+.wiz .ask{grid-column:1/-1;background:rgba(255,255,255,.1);border-radius:16px;padding:12px 14px;margin-top:6px;font:600 15px/1.5 var(--sans);color:#fff}
+.wiz .ask small{display:block;font:600 11px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#B9D3C1;margin-bottom:4px}
+.minidragon{display:flex;gap:10px;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}.minidragon img{width:44px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,140px);background:var(--forest);color:#fff;padding:14px 20px;border-radius:16px;transition:transform .3s;z-index:9;max-width:90vw;font-weight:500}
+.toast.on{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<header class="top">
+  <a href="#home" class="wordmark" aria-label="Olio home">olio</a>
+  <nav aria-label="Main"><a href="#home">Tonight</a><a href="#book">Road book</a></nav>
+</header>
+<main id="view"></main>
+<div class="proto" id="foot" hidden>
+  <span>Students only ever see your first name, and only if you say yes on day 7.</span>
+  <button id="stopBtn" type="button">Stop daily letters</button>
+  <button id="outBtn" type="button">Sign out</button>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+{
+const DAYS=[
+ {n:1,name:"Before",short:"Before",title:"Who you were before",
+  open:()=>`Tonight we don't start with the win. We go back to before it, when you didn't know any of this would happen. I'll walk it with you.`,
+  qs:[{k:"before",q:"Go back to the time before it all began. Where were you, and what did you want?",chips:["I was in my … year at …","I remember sitting in …","Back then I wanted …"]},
+      {k:"belief",q:"What did you believe about yourself then that turned out to be wrong?",chips:["I thought people like me …","I was sure I wasn't …","Nobody told me …"]}]},
+ {n:2,name:"The turn",short:"Turn",title:"The moment it began",
+  open:a=>a(1,"before")?`Yesterday you went back to ${quote(a(1,"before"))} Tonight, the moment something shifted.`:`Tonight, the moment something shifted.`,
+  qs:[{k:"spark",q:"Was there a moment you decided to try? Tell it like a scene.",chips:["It was a … evening","Someone said to me …","I saw a post about …"]},
+      {k:"who",q:"Who was there at the start? Someone who pushed you, or doubted you.",chips:["My friend … told me","A senior I barely knew …","My family thought …"]}]},
+ {n:3,name:"The road",short:"Road",title:"Walk it again, slowly",
+  open:()=>`Tonight we draw the map. One day a student will follow these steps, so let's write them the way they really happened. No rush.`,
+  qs:[{k:"steps",t:"steps",q:"What were the steps, in the order you lived them?",hint:"Short is fine. Add roughly when, if you remember."},
+      {k:"biggest",q:"Looking at them now, which step felt biggest at the time? Which feels biggest now?",chips:["At the time it was …","Now I think …"]}]},
+ {n:4,name:"The hard part",short:"Hard",title:"The night you almost stopped",
+  open:a=>{const s=(a(3,"steps")||[]).filter(x=>x.s).map(x=>x.s);return s.length>1?`You walked ${s.length} steps, from ${quote(s[0],1)} to ${quote(s[s.length-1],1)}. On paper it looks clean. It probably wasn't.`:`On paper, every road looks clean. It rarely is.`},
+  qs:[{k:"low",q:"What was the lowest point? The night you almost stopped.",chips:["I was rejected by …","I remember crying after …","I nearly gave up when …"]},
+      {k:"kept",q:"What kept you going? And what would you do differently?",chips:["What kept me going was …","If I did it again, I'd …","The mistake I made was …"]}]},
+ {n:5,name:"It became real",short:"Real",title:"The day it became real",
+  open:()=>`After the hard part, there was a day it actually happened. Let's go stand in that day together for a minute.`,
+  qs:[{k:"moment",q:"How did you find out? Where were you, and who did you tell first?",chips:["I opened the email in …","My hands were …","The first person I called was …"]},
+      {k:"proof",t:"proof",q:"Could you show us that day?",hint:"An offer letter, certificate, official profile or someone who can confirm. Only the Olio team sees this. It's how we keep every road on Olio real."}]},
+ {n:6,name:"What you know now",short:"Now",title:"A letter to who you were",
+  open:a=>`You've remembered the before, the turn, the road, the hard night and the day it became real. Tonight you get to talk back to the person you were${a(1,"before")?` when ${quote(a(1,"before"),1)}`:""}.`,
+  qs:[{k:"letter",q:"If you could sit next to your younger self for ten minutes, what would you tell them?",chips:["Dear me,","Start earlier with …","Don't waste time on …","It's okay that …"]},
+      {k:"time",t:"choice",q:"How long did the whole road take, from the turn to the day it became real?",o:["Under 3 months","3 to 6 months","6 to 12 months","More than a year"]}]},
+ {n:7,name:"Read it back",short:"Read",title:"Your road, in your words",open:()=>``,qs:[]}
+];
+const FIELDS=["A job","An internship","Studying abroad","A business competition","Something else"];
+const blank=()=>({started:false,day:1,app:{},a:{},done:[],consent:{},feel:""});
+let S=blank();
+const SB=window.supabase.createClient("https://sjfuuqbcgivbvtpvwgvs.supabase.co","sb_publishable_NqGCmIyu5865H8dTdmfz2g__8hiY1Rl");
+const FN="https://sjfuuqbcgivbvtpvwgvs.supabase.co/functions/v1/";
+let J=null,UID=null;const dirty=new Set();let syncT=0;const noted=new Set();
+const cacheKey=()=>"olioHubLive:"+(UID||"none");
+const save=()=>{try{localStorage.setItem(cacheKey(),JSON.stringify(S))}catch(e){}
+ if(!J)return;Object.keys(S.a).forEach(d=>dirty.add(+d));clearTimeout(syncT);syncT=setTimeout(sync,900)};
+async function sync(){if(!J)return;const days=[...dirty];dirty.clear();
+ for(const d of days){const ans={...S.a[d]};const{error}=await SB.from("journey_answers").upsert({journey_id:J.id,day:d,answers:ans},{onConflict:"journey_id,day"});if(error){dirty.add(d);toast("Couldn't save just now. We'll keep trying.");}}}
+addEventListener("beforeunload",()=>{if(dirty.size)sync()});
+async function fn(name,body){const r=await fetch(FN+name,{method:"POST",headers:{"content-type":"application/json",apikey:"sb_publishable_NqGCmIyu5865H8dTdmfz2g__8hiY1Rl"},body:JSON.stringify(body)});return r.json().catch(()=>({error:"Network problem. Please try again."}))}
+async function load(){
+ const{data:{session}}=await SB.auth.getSession();UID=session?.user?.id||null;if(!UID){S=blank();J=null;return}
+ const{data:j}=await SB.from("journeys").select("*").maybeSingle();J=j||null;if(!J){S=blank();return}
+ const[{data:ans},{data:priv},{data:con},{data:mem}]=await Promise.all([
+  SB.from("journey_answers").select("day,answers,completed_at").eq("journey_id",J.id),
+  SB.from("senior_private").select("full_name,email,proof_type,proof_link,proof_path").eq("journey_id",J.id).maybeSingle(),
+  SB.from("hub_consents").select("*").eq("journey_id",J.id).order("given_at",{ascending:false}).limit(1),
+  SB.from("community_members").select("invite_code").eq("user_id",UID).maybeSingle()]);
+ S=blank();S.started=true;S.app={first:J.first_name,field:J.field,what:J.headline,when:J.reminder_slot,startedAt:J.started_at,email:priv?.email,full:priv?.full_name,code:mem?.invite_code,stopped:!!J.reminders_stopped_at};
+ (ans||[]).forEach(r=>{S.a[r.day]=r.answers||{};if(r.completed_at)S.done.push(r.day)});
+ if(priv?.proof_type){S.a[5]=S.a[5]||{};S.a[5].proof={type:priv.proof_type,link:priv.proof_link||"",file:priv.proof_path?priv.proof_path.split("/").pop():""}}
+ const c=(con||[])[0];if(c)S.consent={road:c.share_road,hard:c.include_hard,letter:c.include_letter,voice:c.include_voice,ok:c.understands_takedown,share:c.share_road};
+ S.day=Math.min(7,Math.max(1,Math.floor((Date.now()-new Date(J.started_at))/864e5)+1));
+}
+async function upload(file,folder,label){if(!file||!UID)return null;if(file.size>25e6){toast("That file is over 25 MB. Try a shorter one.");return null}
+ const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);const path=`${folder}/${UID}/${label}-${Date.now()}.${ext}`;
+ const{error}=await SB.storage.from("senior-media").upload(path,file,{upsert:false,contentType:file.type||undefined});
+ if(error){toast("That upload didn't work. Please try again.");return null}toast("Attached.");return path}
+async function note(n,k,r){const key=n+":"+k;if(!J||!r||noted.has(key))return;noted.add(key);
+ await SB.from("wizard_notes").insert({journey_id:J.id,day:n,question_key:k,said:r.said.replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,"<").replace(/&gt;/g,">"),ask:r.ask})}
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);const view=$("#view");
+const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),2400)};
+const A=(d,k)=>(S.a[d]||{})[k];
+function quote(s,short){s=String(s||"").trim().split(/(?<=[.!?])\s/)[0];const max=short?40:90;if(s.length>max)s=s.slice(0,max).replace(/\s\S*$/,"")+"…";return short?`“${esc(s)}”`:`“${esc(s)}”.`}
+const nm=()=>esc(S.app.first||"friend");
+const isDone=n=>S.done.includes(n);
+const open=n=>n<=S.day||isDone(n-1);
+const nextDay=()=>DAYS.find(d=>!isDone(d.n)&&open(d.n));
+const when=()=>({"Morning":"8 in the morning","After lunch":"2 in the afternoon","Evening":"8 in the evening","Late night":"11 at night"}[S.app.when]||"8 in the evening");
+
+function scene(at){
+ at=Math.min(Math.max(at,1),7);
+ return `<div class="scene" aria-hidden="true" data-at="${at}"><svg viewBox="0 0 440 170"><path d="M10,150 C60,150 90,124 150,96 S250,120 280,82 S370,96 425,36" fill="none" stroke="var(--forest)" stroke-width="3" stroke-dasharray="3 9" stroke-linecap="square" opacity=".75"/><g class="stops"></g></svg><img src="dragon-first-step.svg" alt=""></div>`;
+}
+function layoutScene(){const sc=document.querySelector(".scene:not([data-done])");if(!sc)return;sc.dataset.done=1;
+ const path=sc.querySelector("path"),L=path.getTotalLength(),at=+sc.dataset.at;
+ const pts=[...Array(7)].map((_,i)=>path.getPointAtLength(L*(0.08+i*0.14)));
+ sc.querySelector(".stops").innerHTML=pts.map((p,i)=>`<rect x="${p.x-5}" y="${p.y-5}" width="10" height="10" fill="${i<S.done.length?"var(--forest)":"var(--bg)"}" stroke="var(--forest)" stroke-width="2"/>`).join("");
+ const p=pts[at-1],img=sc.querySelector("img");img.style.left=(p.x/4.4)+"%";img.style.top=(p.y/1.7)+"%";}
+new MutationObserver(layoutScene).observe(document.body,{childList:true,subtree:true});
+
+
+/* ---------- The Wizard listens: reflections built only from the senior's own words ---------- */
+const FEEL=/(cried|crying|scared|afraid|alone|lonely|ashamed|embarrass|rejected|failed|lost|broke|hopeless|panic|anxious|tired|gave up|quit|deleted)/i;
+function bit(s,max=60){s=String(s||"").replace(/\s+/g," ").trim();const parts=s.split(/(?<=[.!?])\s+/);s=(parts.find(x=>FEEL.test(x))||parts[0]||"");if(s.length>max)s=s.slice(0,max).replace(/\s\S*$/,"")+"…";else s=s.replace(/[.!?,;:]+$/,"");return s}
+function person(s){const m=String(s||"").match(/(?:^|[^.!?]\s)([A-Z][a-z]{2,})/g)||[];const stop=/^(I|My|The|A|An|At|In|On|It|We|He|She|They|Then|When|And|But|So|Back|Now|Dear|Facebook|LinkedIn|Dhaka|DU|BUET|Bangladesh)$/;for(const x of m){const w=x.trim().split(/\s/).pop();if(!stop.test(w))return w}return""}
+function reflect(k,v){
+ if(k==="steps"){const s=(v||[]).filter(x=>x.s);if(!s.length)return null;return {said:`${s.length} steps, from “${esc(bit(s[0].s,40))}” to “${esc(bit(s[s.length-1].s,40))}”. Written down, they look like a straight line. You and I both know they weren't.`,ask:"Which of these steps did nobody see you take?"}}
+ if(k==="time")return v?{said:`${esc(v)}. Every day of it is in your road book now, kept.`,ask:"What did that time teach you about patience?"}:null;
+ if(k==="proof")return {said:"Thank you for trusting us with this. It stays with the Olio team only, and it's how every road on Olio stays real.",ask:"Think about the person who handed you that letter, or confirmed that day. Did they know what it meant to you?"};
+ if(typeof v!=="string"||v.trim().length<8)return null;
+ const p=esc(bit(v)),who=person(v),hurt=FEEL.test(v);
+ const T={
+  before:[`You began here: “${p}”. That person had no idea what was coming.`,"What did that version of you already have, that you never gave them credit for?"],
+  belief:[`“${p}”. Many roads begin with a belief that later breaks.`,"Who first made you believe that, and on which day did you stop believing it?"],
+  spark:[`A small moment, carrying a big weight: “${p}”. Most turns look ordinary from the outside.`,"What did you feel in your body, right in that moment?"],
+  who:who?[`${esc(who)} was there at the start. The people who walk beside us early rarely know what they did.`,`If ${esc(who)} read your road one day, what would you want them to know?`]:[`“${p}”. The people around the start shape the whole road, even the ones who doubted.`,"Who believed in you before you believed in yourself?"],
+  biggest:[`“${p}”. Your answer changed with time. That change is the wisdom a student can't see yet.`,"What do you understand now that you couldn't have understood then?"],
+  low:hurt?[`You wrote “${p}”. That took courage to put into words. And still, you are here tonight, writing about it.`,"What would you say to someone sitting in that same night, tomorrow?"]:[`“${p}”. The lowest point is often where the real road begins.`,"What did that night quietly give you, that you only see now?"],
+  kept:[`“${p}”. That is the thread that held you. It's worth noticing that it's still with you.`,"Where in your life today is that same thread still holding?"],
+  moment:[`“${p}”. Remember this feeling. It's the one every student on this road is walking toward.`,"Who did you become in that moment that you weren't the morning before?"],
+  letter:[`Read your own words once more, slowly: “${p}”.`,"Which line of your letter do you still need to hear today?"]
+ }[k];
+ return T?{said:T[0],ask:T[1]}:null;
+}
+const wizCard=(r,label="The Wizard listened")=>r?`<div class="wiz" role="note"><span class="who">${label}</span><p class="said">${r.said}</p><img src="wizard.svg" alt="The Wizard"><div class="ask"><small>Something to sit with</small>${esc(r.ask)}</div></div>`:"";
+const guide=(img,text,who="Your dragon")=>`<div class="guide"><img src="${img}" alt=""><div class="bubble"><span class="who">${who}</span>${text}</div></div>`;
+function lastThought(){for(const n of [...S.done].sort((a,b)=>b-a)){const qs=(DAYS[n-1]||{}).qs||[];for(let i=qs.length-1;i>=0;i--){const r=reflect(qs[i].k,A(n,qs[i].k));if(r)return r}}return null}
+
+/* ---------- Welcome: a short conversation, not a form ---------- */
+let w=0;
+const W=[
+ {k:"first",q:"Before anything else, what should we call you?",hint:"Your first name. It's the only name a student would ever see.",t:"text"},
+ {k:"field",q:n=>`Hi ${n}. What road did you walk?`,t:"choice",o:FIELDS},
+ {k:"what",q:"Say it in one line. Where did the road lead?",hint:"For example: “Summer internship at a bank in Dhaka, 2025.”",t:"text"},
+ {k:"when",q:"When do you have ten quiet minutes?",hint:"We'll send one question a day at that time, for seven days.",t:"choice",o:["Morning","After lunch","Evening","Late night"]},
+ {k:"email",q:"Where should we write to you?",hint:"Private. Only the Olio team sees it, never students.",t:"email"},
+ {k:"full",q:"And your full name?",hint:"Private too. Only the Olio team sees it, so we can check your road is real.",t:"text"},
+ {k:"ref",q:"Did someone send you our way?",hint:"Optional. Their name or invite code, so we can thank them.",t:"text",opt:true}
+];
+function welcome(){
+ if(S.started){location.hash="home";return}
+ if(w===0&&!S.app._began){view.innerHTML=`<div class="fade center" style="margin:auto 0">
+  ${scene(1)}
+  <h1>You walked a road.<br>Tell it back to us.</h1>
+  <p class="tagline">Seven evenings. One question at a time.</p>
+  <p class="muted" style="max-width:46ch;margin:0 auto 22px">You'll remember how it really went, and end the week with your whole story written down, for you. If you choose, it becomes a road a student in Bangladesh can walk after you.</p>
+  <div style="text-align:left;max-width:460px;margin:0 auto 22px">${guide("dragon-blabber.svg","I'm your dragon. Each evening I'll bring you one small part of your road and walk through it with you.")}
+  <div class="guide"><img src="wizard.svg" alt=""><div class="bubble"><span class="who">The Wizard</span>I'll be listening. After you write, I'll tell you what I heard, and leave you one thing to think about.</div></div></div>
+  <div class="stack" style="max-width:420px;margin:0 auto"><button class="btn" id="go">Begin</button><span class="muted" style="font-size:15px">About ten minutes a day. Nothing is shared unless you say yes on day 7.</span></div></div>`;
+  $("#go").onclick=()=>{S.app._began=true;save();welcome()};return}
+ const s=W[w];const v=S.app[s.k]||"";const q=typeof s.q==="function"?s.q(nm()):s.q;
+ view.innerHTML=`<div class="fade" style="display:flex;flex-direction:column;flex:1">
+  <div class="dots">${W.map((_,i)=>`<i class="${i<w?"on":i===w?"cur":""}"></i>`).join("")}</div>
+  ${guide(w%2?"dragon-suggestions.svg":"dragon-blabber.svg",`<b style="font:700 19px/1.35 var(--head)">${esc(q)}</b>${s.hint?`<span class="hint" style="display:block;margin-top:6px">${esc(s.hint)}</span>`:""}`)}
+  ${s.t==="choice"?`<div class="opts">${s.o.map(o=>`<label class="opt"><input type="radio" name="wv" value="${esc(o)}" ${v===o?"checked":""}>${esc(o)}</label>`).join("")}</div>`
+   :`<input id="wv" type="${s.t}" value="${esc(v)}" autocomplete="${s.k==="first"?"given-name":s.k==="email"?"email":"off"}">`}
+  <p class="hint" id="err" style="color:var(--ink)"></p>
+  <div class="bottom stack"><button class="btn" id="next">${w===W.length-1?"Start my seven days":"Continue"}</button>
+  ${w>0?`<button class="btn link" id="back" style="justify-self:center">Back</button>`:""}</div></div>`;
+ const inp=$("#wv");if(inp){inp.focus();inp.onkeydown=e=>{if(e.key==="Enter")$("#next").click()}}
+ document.querySelectorAll("[name=wv]").forEach(r=>r.onchange=()=>setTimeout(()=>$("#next").click(),250));
+ if($("#back"))$("#back").onclick=()=>{w--;welcome()};
+ $("#next").onclick=()=>{const val=inp?inp.value.trim():(document.querySelector("[name=wv]:checked")||{}).value||"";
+  if(!val&&!s.opt){$("#err").textContent=s.t==="choice"?"Pick the one that fits best.":"Just this one, then we'll move on.";return}
+  if(s.k==="email"&&!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(val)){$("#err").textContent="That email doesn't look quite right.";return}
+  S.app[s.k]=val;
+  if(w<W.length-1){w++;welcome();return}
+  const b=$("#next");b.disabled=true;b.textContent="Starting…";
+  begin().catch(()=>{$("#err").textContent="Something went wrong. Please try again.";b.disabled=false;b.textContent="Start my seven days"})};
+}
+async function begin(){
+ const{data:{session}}=await SB.auth.getSession();
+ if(!session){const r=await fn("hub-start",{email:S.app.email,first:S.app.first});
+  if(r.exists){view.innerHTML=`<div class="fade">${guide("dragon-blabber.svg",`You've been here before, ${nm()}. We've sent a link to <b>${esc(S.app.email)}</b>. Open it on this phone and you'll be right back where you were.`)}</div>`;return}
+  if(!r.token_hash)throw new Error(r.error||"start");
+  const{error}=await SB.auth.verifyOtp({type:"magiclink",token_hash:r.token_hash});if(error)throw error}
+ const{error:e2}=await SB.rpc("hub_start",{p:{first:S.app.first,field:S.app.field,what:S.app.what,when:S.app.when,email:S.app.email,full:S.app.full,ref:S.app.ref||""}});if(e2)throw e2;
+ await load();toast(`Thank you, ${S.app.first}. Your first question is ready.`);location.hash="home";route();
+}
+
+/* ---------- Tonight ---------- */
+function home(){
+ if(!S.started){location.hash="welcome";return}
+ const d=nextDay(),all=S.done.length===7;
+ const last=[...S.done].sort((a,b)=>b-a)[0];const lastLine=last&&last<7?pickLine(last):"";
+ const date=new Date(Date.now()+(S.day-1)*864e5).toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"short"});
+ const ahead=d&&d.n>S.day;
+ view.innerHTML=`<div class="fade">
+  <div><p class="eyebrow" style="color:var(--muted)">${esc(date)}</p><h1>${all?`Thank you, ${nm()}`:`Hello, ${nm()}`}</h1></div>
+  ${all?`<div class="hero"><div class="txt"><p class="eyebrow">Your road book is complete</p><h2>Seven evenings. One whole road.</h2>
+    <p class="sub">It's with the Olio team now. We'll tidy the wording with you, and nothing goes live until you've seen the final version and said yes.</p></div>
+    <div class="fig"><img src="wizard.svg" alt=""></div><a class="btn" href="#book">Read your road book</a></div>`
+  :d?`<div class="hero"><div class="txt"><p class="eyebrow">${ahead?"If you'd like to keep going":"Tonight's question"} · Day ${d.n} of 7</p><h2>${esc(d.title)}</h2>
+    <p class="sub">${esc(d.qs[0]?.q||"Read your story back and decide what to share.")}</p>
+    <p class="hq">${d.n===1?"“I'll walk it with you.”":"“Ready when you are. I'll walk it with you.”"}</p></div>
+    <div class="fig"><img src="dragon-first-step.svg" alt=""></div><a class="btn" href="#day-${d.n}">${ahead?"Continue to day "+d.n:"Sit with it now"}</a></div>`
+  :`<div class="hero"><div class="txt"><p class="eyebrow">All done for today</p><h2>Rest. Tomorrow's question comes at ${when()}.</h2></div><div class="fig"><img src="wizard.svg" alt=""></div></div>`}
+  <div class="week" aria-label="Your seven days">${DAYS.map(x=>`<a href="${open(x.n)?"#day-"+x.n:"#home"}" class="${isDone(x.n)?"done":""} ${d&&x.n===d.n?"now":""}" aria-label="Day ${x.n}: ${esc(x.name)}">${esc(x.short)}<b>${isDone(x.n)?"✓":x.n}</b></a>`).join("")}</div>
+  ${(()=>{const t=lastThought();return t?wizCard(t,"The Wizard left you this"):""})()}
+  <h3>Your week</h3>
+  <div class="tiles">
+   <a class="tile butter" href="#book"><span class="tag">Yours to keep</span><b>Road book</b><span>${S.done.filter(x=>x<7).length} of 6 evenings written</span></a>
+   <div class="tile mist"><span class="tag">Reminders</span><b>${S.app.stopped?"Letters stopped":"Tonight's letter"}</b><span>${S.app.stopped?"You can still come back any time":"Arrives at "+when()}</span></div>
+  </div>
+  ${scene(all?7:d?d.n:S.day)}
+  ${all?`<div class="card"><h3>Know someone with a road worth telling?</h3><p class="muted">Send them your invite code. When they begin, we'll know you brought them.</p>
+   <div class="row"><input type="text" readonly value="${esc(code())}" style="max-width:200px" aria-label="Your invite code"><button class="btn quiet" style="width:auto" id="copy">Copy</button></div></div>`:""}
+ </div>`;
+ if($("#copy"))$("#copy").onclick=()=>navigator.clipboard?.writeText(code()).then(()=>toast("Copied"),()=>toast("Select the code to copy it"));
+}
+const code=()=>S.app.code||"";
+function pickLine(n){const vals=Object.values(S.a[n]||{}).filter(v=>typeof v==="string"&&v.length>12);if(!vals.length)return"";
+ const sents=vals.join(" ").split(/(?<=[.!?])\s+/).filter(s=>s.length>15&&s.length<180);return (sents.sort((a,b)=>b.length-a.length)[0]||vals[0].slice(0,160)).trim()}
+
+/* ---------- A day: one question per screen ---------- */
+let qi=0,curDay=0;
+function dayView(n){
+ if(!S.started){location.hash="welcome";return}
+ const d=DAYS[n-1];if(!d||!open(n)){location.hash="home";return}
+ if(curDay!==n){curDay=n;qi=-1}
+ if(n===7)return readBack();
+ if(qi===-1){view.innerHTML=`<div class="fade" style="display:flex;flex-direction:column;flex:1">
+   <p class="eyebrow">DAY ${n} OF 7 · ${esc(d.name.toUpperCase())}</p><h1>${esc(d.title)}</h1>
+   ${guide("dragon-roads.svg",d.open((a,k)=>A(a,k)))}
+   <p class="muted">${d.qs.length} questions. Write as much or as little as you like. You can stop halfway and come back; everything saves as you type. After each answer, the Wizard will tell you what it heard.</p>
+   <div class="bottom stack"><button class="btn" id="b">I'm ready</button><a class="btn link" href="#home" style="justify-self:center">Not tonight</a></div></div>`;
+  $("#b").onclick=()=>{qi=0;dayView(n)};return}
+ if(qi>=d.qs.length)return closing(d);
+ const q=d.qs[qi];const v=A(n,q.k);
+ let input="";
+ if(q.t==="steps"){const st=v&&v.length?v:[{s:"",m:""},{s:"",m:""},{s:"",m:""}];input=`<div id="steps">${st.map(stepRow).join("")}</div><button class="btn link" id="add" type="button">Add a step</button>`}
+ else if(q.t==="choice")input=`<div class="opts">${q.o.map(o=>`<label class="opt"><input type="radio" name="c" value="${esc(o)}" ${v===o?"checked":""}>${esc(o)}</label>`).join("")}</div>`;
+ else if(q.t==="proof")input=`<div class="opts">${["Offer letter","Certificate","Official profile link","Someone who can confirm"].map(o=>`<label class="opt"><input type="radio" name="c" value="${esc(o)}" ${(v||{}).type===o?"checked":""}>${esc(o)}</label>`).join("")}</div>
+   <input type="text" id="pl" style="margin-top:14px" placeholder="A link, or the person's name and role" value="${esc((v||{}).link)}" aria-label="Proof link or contact">
+   <div class="drop"><input type="file" id="pf" accept="image/*,.pdf" aria-label="Attach a file"> Hide anything private first, like salary or ID numbers.</div>`;
+ else input=`<textarea id="t" aria-label="${esc(q.q)}" placeholder="Write it here, in your own words. It saves as you type.">${esc(v)}</textarea>
+   <div class="minidragon"><img src="dragon-suggestions.svg" alt="">Stuck? Start with one of these.</div><div class="chips" aria-label="Ways to begin">${(q.chips||[]).map(c=>`<button type="button" class="chip">${esc(c)}</button>`).join("")}</div>
+   <p class="hint">Rather say it out loud? Record a voice note on your phone and attach it. <input type="file" accept="audio/*" aria-label="Attach a voice note" id="vn" style="font-size:14px"></p>`;
+ view.innerHTML=`<div class="fade" style="display:flex;flex-direction:column;flex:1">
+  <div class="dots">${d.qs.map((_,i)=>`<i class="${i<qi?"on":i===qi?"cur":""}"></i>`).join("")}</div>
+  <p class="eyebrow" style="color:var(--muted)">Day ${n} of 7 · ${esc(d.title)}</p>
+  <div class="taskcard"><p class="eyebrow">Tonight's question · ${qi+1} of ${d.qs.length}</p><p class="q">${esc(q.q)}</p>${q.hint?`<p class="hint" style="margin:8px 0 0">${esc(q.hint)}</p>`:""}</div>
+  ${input}
+  <div class="bottom"><div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:10px"><a class="btn quiet" href="#home" id="later">Finish later</a><button class="btn" id="next">${qi===d.qs.length-1?"That's it for tonight":"Next question"}</button></div>
+  <button class="btn link" id="back" style="margin:6px auto 0;display:flex">${qi?"Back":"Back to the start"}</button></div></div>`;
+ const keep=()=>{const o=S.a[n]||{};
+  if(q.t==="steps")o[q.k]=[...document.querySelectorAll(".stepline")].map(r=>({s:r.querySelector(".st").value.trim(),m:r.querySelector(".sm").value.trim()})).filter(x=>x.s||x.m);
+  else if(q.t==="choice")o[q.k]=(document.querySelector("[name=c]:checked")||{}).value||o[q.k];
+  else if(q.t==="proof"){const pv={type:(document.querySelector("[name=c]:checked")||{}).value||"",link:$("#pl").value,file:(o[q.k]||{}).file};S.a[n]=o;
+   clearTimeout(keep.p);keep.p=setTimeout(()=>J&&SB.from("senior_private").update({proof_type:pv.type||null,proof_link:pv.link||null}).eq("journey_id",J.id).then(({error})=>error&&console.warn(error)),800);
+   o[q.k]={type:pv.type,file:pv.file};return}
+  else{o[q.k]=$("#t").value}
+  S.a[n]=o;save()};
+ const pf=$("#pf");if(pf)pf.onchange=async()=>{const p=await upload(pf.files[0],"hub-proof","proof");if(p){await SB.from("senior_private").update({proof_path:p}).eq("journey_id",J.id);S.a[n]=S.a[n]||{};S.a[n][q.k]={...(S.a[n][q.k]||{}),file:pf.files[0].name}}};
+ const vn=$("#vn");if(vn)vn.onchange=async()=>{const p=await upload(vn.files[0],"hub",`day${n}-${q.k}`);if(p){S.a[n]=S.a[n]||{};S.a[n][q.k+"Voice"]=p;save()}};
+ view.oninput=keep;view.onchange=keep;
+ const t=$("#t");if(t){t.focus();document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{const s=c.textContent.replace(/…$/,"").trimEnd();t.value=(t.value?t.value.trimEnd()+"\n":"")+s+" ";t.focus();keep()})}
+ if($("#add"))$("#add").onclick=()=>{const w=$("#steps");w.insertAdjacentHTML("beforeend",stepRow({s:"",m:""},w.children.length));w.lastElementChild.querySelector("input").focus()};
+ view.querySelectorAll(".rm").forEach(b=>b.onclick=()=>{b.parentElement.remove();keep()});
+ $("#back").onclick=()=>{keep();qi--;dayView(n)};
+ $("#later").onclick=()=>{keep();toast("Saved. It'll be right here when you come back.")};
+ $("#next").onclick=()=>{keep();sync();const r=reflect(q.k,A(n,q.k));if(r)note(n,q.k,r);if(qi<d.qs.length-1&&r)return listened(n,r);qi++;dayView(n)};
+}
+const stepRow=(s,i)=>`<div class="stepline"><input type="text" class="st" value="${esc(s.s)}" placeholder="${["e.g. Joined the debate club","e.g. Failed my first interview","e.g. Got the offer"][i]||"Another step"}" aria-label="Step ${i+1}"><input type="text" class="sm" value="${esc(s.m)}" placeholder="When" aria-label="Step ${i+1} when"><button type="button" class="rm" aria-label="Remove step ${i+1}">×</button></div>`;
+function listened(n,r){
+ view.innerHTML=`<div class="fade" style="display:flex;flex-direction:column;flex:1">
+  <p class="eyebrow" style="color:var(--muted)">Day ${n} of 7 · ${esc(DAYS[n-1].title)}</p>
+  ${wizCard(r)}
+  <p class="muted">You don't need to answer it. Just let it sit while you go on.</p>
+  <div class="bottom stack"><button class="btn" id="c">Next question</button></div></div>`;
+ $("#c").onclick=()=>{qi++;dayView(n)};window.scrollTo(0,0)}
+function echo(n,i){const prev=DAYS[n-1].qs[i-1];const v=A(n,prev.k);
+ if(typeof v==="string"&&v.trim().length>10)return `Thank you for that. ${["I can picture it.","That matters more than you'd think.","Hold on to that for a moment."][n%3]}`;
+ if(Array.isArray(v)&&v.length)return `${v.length} steps. Now let's look at them from where you stand today.`;
+ return "Take your time with this one.";}
+function closing(d){
+ if(!isDone(d.n)){S.done.push(d.n);save();SB.rpc("hub_complete_day",{p_day:d.n}).then(({error})=>error&&console.warn(error))}
+ const nx=DAYS[d.n];const lq=d.qs[d.qs.length-1];const r=reflect(lq.k,A(d.n,lq.k))||reflect(d.qs[0].k,A(d.n,d.qs[0].k));
+ view.innerHTML=`<div class="fade" style="display:flex;flex-direction:column;flex:1">
+  <p class="eyebrow">Day ${d.n} of 7 · Kept in your road book</p>
+  <h2>${["","That's where it all started.","Every road has a turn. That was yours.","That's your road, step by step.","Thank you for telling the hard part. Most people never do.","Remember how that felt.","That's the letter you needed back then."][d.n]}</h2>
+  ${wizCard(r,"The Wizard listened tonight")}
+  ${nx?guide("dragon-first-step.svg",`That's one more stop on your road. Tomorrow we go to <b>${esc(nx.title.toLowerCase())}</b>. I'll come find you at ${when()}.`):""}
+  <div class="bottom stack"><a class="btn" href="#home">Close for tonight</a>${nx?`<a class="btn link" href="#day-${nx.n}" style="justify-self:center">I'd like to keep going</a>`:""}</div></div>`;
+ curDay=0;
+}
+
+/* ---------- Day 7: read it back ---------- */
+function bookHtml(){
+ const s=(A(3,"steps")||[]).filter(x=>x.s);
+ const sec=(t,items)=>{const body=items.filter(x=>x[1]).map(x=>`<p class="qq">${esc(x[0])}</p><p class="a">${esc(x[1])}</p>`).join("");return body?`<h3>${esc(t)}</h3>${body}`:""};
+ const out=[
+  sec("Before",[["Where you were",A(1,"before")],["What you believed",A(1,"belief")]]),
+  sec("The turn",[["The moment",A(2,"spark")],["Who was there",A(2,"who")]]),
+  s.length?`<h3>The road</h3>${s.map((x,i)=>`<div class="cp"><span class="num">${i+1}</span><span><b>${esc(x.s)}</b>${x.m?`<br><span class="muted" style="font-size:15px">${esc(x.m)}</span>`:""}</span></div>`).join("")}${A(3,"biggest")?`<p class="qq">The biggest step</p><p class="a">${esc(A(3,"biggest"))}</p>`:""}`:"",
+  sec("The hard part",[["The lowest point",A(4,"low")],["What kept you going",A(4,"kept")]]),
+  sec("The day it became real",[["How you found out",A(5,"moment")]]),
+  sec("A letter to who you were",[["",A(6,"letter")],["How long it took",A(6,"time")]])
+ ].join("");
+ return out||`<p class="tagline">Your road book is empty for now. It fills up, one evening at a time.</p>`;
+}
+function readBack(){
+ view.innerHTML=`<div class="fade book">
+  <p class="eyebrow">DAY 7 OF 7 · READ IT BACK</p><h1>${nm()}'s road</h1>
+  ${guide("dragon-roads.svg","We made it to the last stop. Six evenings ago you started with where you were. This is everything you've told us, in your own words. Read it slowly.")}
+  <p class="eyebrow">${esc(S.app.what||S.app.field||"")}</p>
+  ${bookHtml()}
+  <h3 style="margin-top:40px">Reading it back, what do you feel?</h3>
+  <textarea id="feel" style="min-height:120px" placeholder="One line is enough.">${esc(S.feel)}</textarea>
+  <h3 style="margin-top:40px">What would you like to share?</h3>
+  <p class="muted">Students would see your first name and the parts you choose. Your full name, email and proof are never shown. The Olio team will shape this into a road with you, and you'll approve the final version before anything goes live.</p>
+  ${[["cRoad","Share my road and my first name with students on Olio.",S.consent.road],["cHard","Include the hard part. It might help someone most.",S.consent.hard!==false],["cLetter","Include my letter to my younger self.",S.consent.letter!==false],["cVoice","Include any voice notes I attached.",S.consent.voice],["cOk","I know I can ask Olio to change or take down my road at any time.",S.consent.ok]].map(c=>`<label class="check"><input type="checkbox" id="${c[0]}" ${c[2]?"checked":""}><span>${esc(c[1])}</span></label>`).join("")}
+  <p class="hint" id="err" style="color:var(--ink)"></p>
+  <div class="stack" style="margin-top:20px"><button class="btn" id="send">Send my road to Olio</button>
+  <button class="btn quiet" id="keep">Just keep it for myself for now</button></div></div>`;
+ $("#feel").oninput=e=>{S.feel=e.target.value};
+ const fin=share=>{S.consent={road:$("#cRoad").checked,hard:$("#cHard").checked,letter:$("#cLetter").checked,voice:$("#cVoice").checked,ok:$("#cOk").checked,share,at:new Date().toISOString(),wording:"v0-draft"};
+  SB.rpc("hub_submit",{p:{...S.consent,feel:S.feel}}).then(({error})=>{if(error){toast("That didn't go through. Please try again.");return}
+  if(!isDone(7))S.done.push(7);save();curDay=0;toast(share?"Sent. Thank you for trusting us with it.":"Kept. Your road book is yours.");location.hash="home"})};
+ $("#send").onclick=()=>{if(!$("#cRoad").checked||!$("#cOk").checked){$("#err").textContent="To share, please tick the first and last boxes. Or keep it for yourself for now.";return}fin(true)};
+ $("#keep").onclick=()=>fin(false);
+}
+
+function book(){
+ if(!S.started){location.hash="welcome";return}
+ view.innerHTML=`<div class="fade book"><p class="eyebrow">ROAD BOOK</p><h1>${nm()}'s road</h1>
+ <p class="opener">Everything you've written, kept in one place. It's yours whether or not you share it.</p>${bookHtml()}
+ <div class="stack" style="margin-top:30px"><button class="btn quiet" id="cp">Copy my road book</button></div></div>`;
+ $("#cp").onclick=()=>{const t=view.querySelector(".book").innerText;navigator.clipboard?.writeText(t).then(()=>toast("Copied. Paste it anywhere to keep it."),()=>toast("Select the text to copy it"))};
+}
+
+function letter(){
+ const d=nextDay()||DAYS[0];const last=[...S.done].sort((a,b)=>b-a)[0];const line=last?pickLine(last):"";
+ view.innerHTML=`<div class="fade"><p class="eyebrow">THE DAILY REMINDER</p><h2>One letter, at the time they chose</h2>
+ <p class="muted">Each day's email is a short letter, not a notification. It carries a line from what they wrote last time, so it feels like someone is listening. The same question waits at the top of the hub. If a day is missed, the next letter gently brings back the same question.</p>
+ <div class="letter" role="figure" aria-label="Example reminder email"><div class="meta"><b>From:</b> Olio<br><b>Subject:</b> ${nm()}, ${esc((d.qs[0]?.q||"your road is ready to read back.").replace(/^./,c=>c.toLowerCase()))}</div>
+ <div class="body"><p class="wordmark" style="margin-bottom:14px">olio</p><p>Hi ${nm()},</p>
+ ${line?`<p>Last time you wrote: <i>“${esc(line)}”</i></p>`:`<p>Thank you for starting this with us.</p>`}
+ ${(()=>{const t=lastThought();return t?`<p>The Wizard has been thinking about it, and left you this: <b>${esc(t.ask)}</b></p>`:""})()}
+ <p>Your dragon is waiting with tonight's question.</p>
+ <p>Tonight is day ${d.n}: ${esc(d.title.toLowerCase())}. Ten quiet minutes, whenever you're ready.</p>
+ <a class="btn" href="#day-${d.n}" style="max-width:280px">Sit with it now</a>
+ <p class="muted" style="font-family:var(--sans);font-size:14px;margin-top:22px">Busy tonight? That's fine. We'll ask again tomorrow. Stop these letters any time with one click.</p></div></div></div>`;
+}
+
+function team(){
+ view.innerHTML=`<div class="fade"><p class="eyebrow">FOR THE OLIO TEAM</p><h2>Where each evening's answers land</h2>
+ <p class="muted">Seniors never see this page. Full detail is in section 3b of the Phase 1 plan.</p>
+ <table class="tbl"><thead><tr><th>Evening</th><th>Gives us</th><th>Saved to</th></tr></thead><tbody>
+ <tr><td>Welcome</td><td>First name, field, one line, reminder time, email, who sent them</td><td><code>senior_applications</code>, <code>senior_private</code>, <code>journeys</code>, <code>referrals</code></td></tr>
+ <tr><td>1 Before</td><td>Starting point, the student's mirror</td><td><code>journey_answers</code></td></tr>
+ <tr><td>2 The turn</td><td>Trigger and the people around it</td><td><code>journey_answers</code></td></tr>
+ <tr><td>3 The road</td><td>Steps and timing, the road's checkpoints</td><td><code>journey_answers</code></td></tr>
+ <tr><td>4 The hard part</td><td>Low point, mistakes, what to do differently</td><td><code>journey_answers</code></td></tr>
+ <tr><td>5 It became real</td><td>The milestone story, plus private proof</td><td><code>journey_answers</code>, <code>senior_private</code></td></tr>
+ <tr><td>6 What you know now</td><td>Advice, time taken</td><td><code>journey_answers</code></td></tr>
+ <tr><td>7 Read it back</td><td>How it feels, what to share, consent</td><td><code>consents</code></td></tr>
+ </tbody></table>
+ <h3 style="margin-top:30px">Who says what</h3>
+ <p class="muted">The dragon guides: it opens each evening, offers ways to begin, and says when tomorrow's question comes. The Wizard listens: after each answer it reflects back what the senior wrote and leaves one question to sit with. In this prototype the Wizard's lines are fixed templates filled with the senior's own words. In the real hub they could come from the ai-wizard-chat function, with one rule: use only what the senior wrote, and never name a program, competition, date or price.</p>
+ <h3 style="margin-top:30px">This browser's sample answers</h3><pre class="card" style="white-space:pre-wrap;font-size:13px;overflow-x:auto">${esc(JSON.stringify(S,null,2))}</pre></div>`;
+}
+
+$("#stopBtn").onclick=async()=>{if(!J)return;await SB.from("journeys").update({reminders_stopped_at:new Date().toISOString()}).eq("id",J.id);S.app.stopped=true;toast("Done. No more daily letters.");route()};
+$("#outBtn").onclick=async()=>{await sync();await SB.auth.signOut();S=blank();J=null;w=0;location.hash="welcome";route()};
+function route(){
+ const h=location.hash.slice(1)||"welcome";$("#foot").hidden=!S.started;
+ const map={home:"home",book:"book"};
+ document.querySelectorAll(".top nav a").forEach(a=>a.getAttribute("href")==="#"+(map[h]||(h.startsWith("day-")?"home":""))?a.setAttribute("aria-current","page"):a.removeAttribute("aria-current"));
+ const m=h.match(/^day-(\d)$/);
+ view.oninput=null;view.onchange=null;
+ if(m)dayView(+m[1]);else({welcome,home,book}[h]||(S.started?home:welcome))();
+ window.scrollTo(0,0);
+}
+addEventListener("hashchange",()=>{if(/^#(resume|stop|login)=/.test(location.hash))return boot();if(!location.hash.startsWith("#day-"))curDay=0;route()});
+async function boot(){
+ view.innerHTML=`<div class="fade center" style="margin:auto 0">${guide("dragon-first-step.svg","One moment, finding your road…")}</div>`;
+ const m=location.hash.match(/^#(resume|stop|login)=([\w%-]+)/);
+ try{
+  if(m&&m[1]==="stop"){const r=await fn("hub-resume",{token:m[2],action:"stop"});history.replaceState(null,"","#home");
+   view.innerHTML=`<div class="fade">${guide("dragon-blabber.svg",r.stopped?"Done. We won't send any more letters. Your road book is still here whenever you want it.":esc(r.error||"That link didn't work."))}</div>`;return}
+  if(m&&m[1]==="resume"){const r=await fn("hub-resume",{token:m[2]});if(r.token_hash){await SB.auth.verifyOtp({type:"magiclink",token_hash:r.token_hash})}else toast(r.error||"That link didn't work.");history.replaceState(null,"","#home")}
+  if(m&&m[1]==="login"){const{error}=await SB.auth.verifyOtp({type:"magiclink",token_hash:decodeURIComponent(m[2])});if(error)toast("That link has expired. Start again and we'll send a new one.");history.replaceState(null,"","#home")}
+  await load();
+ }catch(e){toast("We couldn't reach Olio. Check your connection and reload.")}
+ if(!S.started&&location.hash!=="#welcome")history.replaceState(null,"","#welcome");
+ route();
+}
+boot();
+}
+</script>
+</body>
+</html>
